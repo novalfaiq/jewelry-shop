@@ -16,7 +16,7 @@ const HeroContent = ({ className = '' }: HeroContentProps) => {
         Discover our exquisite collection of handcrafted jewelry pieces that blend traditional craftsmanship with contemporary style.
       </p>
       <div className="flex flex-col sm:flex-row gap-4">
-        <Button href="/shop" variant="primary" className="bg-white text-blue-600 hover:bg-gray-100 shadow-md">
+        <Button href="/shop" variant="light">
           Shop Collection
         </Button>
         <Button href="/about" variant="secondary" className="text-white border-white hover:bg-white/10 shadow-md">

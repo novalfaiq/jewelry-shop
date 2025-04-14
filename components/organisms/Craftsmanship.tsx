@@ -16,7 +16,7 @@ const Craftsmanship = () => {
               information and legendary service.
             </p>
             <div>
-              <Button href="/craftsmanship" variant="primary" className="bg-white text-blue-900 hover:bg-gray-100 uppercase text-sm">
+              <Button href="/craftsmanship" variant="light">
                 LEARN MORE
               </Button>
             </div>

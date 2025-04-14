@@ -8,11 +8,11 @@ const Newsletter = () => {
   return (
     <section className="py-16 bg-blue-100 relative overflow-hidden">
       <Container>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8 bg-white">
           {/* Left side - Blue Ring Image */}
           <div className="w-full md:w-1/2 flex justify-center">
             <Image 
-              src="/blue-ring.svg" 
+              src="/blue-ring.png" 
               alt="Blue diamond ring" 
               width={400} 
               height={400}
