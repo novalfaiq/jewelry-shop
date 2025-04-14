@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" fill="none">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0a4b78;stop-opacity:0.7" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0.5" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#e6e6e6" />
+  
+  <!-- Hand with jewelry -->
+  <g transform="translate(400, 200) scale(1.2)">
+    <!-- Hand shape -->
+    <path d="M200,300 C180,250 150,200 140,150 C130,100 150,50 200,30 C250,10 300,20 320,70 C340,120 330,170 310,220 C290,270 250,300 200,300 Z" fill="#f5d0c5" />
+    
+    <!-- Wrist/sleeve -->
+    <path d="M140,150 C130,180 120,210 100,230 C80,250 50,260 20,270 C50,290 80,300 120,300 C160,300 190,290 220,270" fill="#e8a798" />
+    <path d="M100,230 C80,250 50,260 20,270 C50,290 80,300 120,300 C160,300 190,290 220,270" fill="#f8c0b0" />
+    <path d="M20,270 C0,280 -20,290 -40,310 C-20,320 0,330 30,335 C60,340 90,335 120,330" fill="#e88a7c" />
+    
+    <!-- Pink sleeve/clothing -->
+    <path d="M-40,310 C-60,330 -80,350 -90,380 C-70,390 -40,395 -10,398 C20,400 50,398 80,395 C110,392 140,388 170,380" fill="#e57373" />
+    
+    <!-- Rings -->
+    <!-- Ring 1: Twisted band on index finger -->
+    <path d="M220,120 C225,115 230,110 235,115 C240,120 245,125 240,130 C235,135 230,140 225,135 C220,130 215,125 220,120 Z" fill="#c0c0c0" stroke="#a0a0a0" stroke-width="1" />
+    
+    <!-- Ring 2: Simple band on middle finger -->
+    <path d="M260,140 C265,135 270,130 275,135 C280,140 285,145 280,150 C275,155 270,160 265,155 C260,150 255,145 260,140 Z" fill="#d4af37" stroke="#b8860b" stroke-width="1" />
+    
+    <!-- Ring 3: Stone ring on ring finger -->
+    <path d="M290,170 C295,165 300,160 305,165 C310,170 315,175 310,180 C305,185 300,190 295,185 C290,180 285,175 290,170 Z" fill="#c0c0c0" stroke="#a0a0a0" stroke-width="1" />
+    <circle cx="300" cy="175" r="5" fill="#20b2aa" stroke="#008080" stroke-width="0.5" />
+  </g>
+</svg>
