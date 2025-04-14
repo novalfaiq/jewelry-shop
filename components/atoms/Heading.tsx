@@ -7,7 +7,7 @@ type HeadingProps = {
 };
 
 const Heading = ({ level = 1, children, className = '' }: HeadingProps) => {
-  const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+  const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
   
   const styles = {
     1: 'text-4xl md:text-5xl lg:text-6xl font-bold',
