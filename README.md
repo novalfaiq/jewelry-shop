@@ -1,8 +1,18 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ✨ Jewelry Landing Page
 
-## Getting Started
+This elegant jewelry store landing page is built with [Next.js](https://nextjs.org), showcasing premium jewelry collections and services.
 
-First, run the development server:
+## 📋 Project Overview
+
+- 🏆 Hero section with featured jewelry
+- 💍 Jewelry categories (Rings, Necklaces, Bracelets, Earrings)
+- 🌟 Latest jewelry collection showcase
+- 🛠️ Craftsmanship section
+- 🔧 Services offered
+- 💬 Customer testimonials
+- 📮 Newsletter subscription
+
+## 🚀 Getting Started
 
 ```bash
 npm run dev
@@ -14,23 +24,38 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3000](http://localhost:3000) to view the site.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🎨 Figma Design
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+[View Jewelry Landing Page Design](https://www.figma.com/design/yGCGWZftLW6CQoGdwpsqRW/Ecommerce--Landing-Page--Community-?node-id=9-2&t=j3Yti5sX7eMY4VYo-0)
 
-## Learn More
+### 📁 Design Assets
+All assets are stored in the `public` directory:
+- Product images: `public/latest-jewelry/`
+- Category images: `public/categories/`
+- Service images: `public/services/`
 
-To learn more about Next.js, take a look at the following resources:
+## 🏗️ Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+components/
+  atoms/        # Basic UI components
+  molecules/    # Combinations of atoms
+  organisms/    # Full page sections
+app/            # Next.js app directory
+public/         # Static assets
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🛠️ Technologies Used
 
-## Deploy on Vercel
+- ⚛️ [Next.js](https://nextjs.org) - React framework
+- 📘 [TypeScript](https://www.typescriptlang.org/) - Type safety
+- 🎨 [Tailwind CSS](https://tailwindcss.com) - Styling
+- 🔍 [React Icons](https://react-icons.github.io/react-icons/) - Icon library
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy easily with [Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme), the platform from the creators of Next.js.
+
+[Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying)
