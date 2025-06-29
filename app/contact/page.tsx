@@ -236,16 +236,6 @@ export default function Contact() {
             </div>
           </Container>
         </section>
-
-        {/* Map Section */}
-        <section className="py-16 bg-gray-50">
-          <Container>
-            <div className="relative h-[400px] rounded-lg overflow-hidden">
-              {/* Replace with actual map component or image */}
-              <div className="absolute inset-0 bg-blue-100"></div>
-            </div>
-          </Container>
-        </section>
       </main>
       <Footer />
     </div>

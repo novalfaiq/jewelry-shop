@@ -78,7 +78,6 @@ export default function NewsletterManagement() {
       const realData = (data && Array.isArray(data)) ? data : [];
       const finalData = [...realData];
       
-      console.log('Final data to display (with dummy record):', finalData);
       setNewsletters(finalData);
     } catch (error: any) {
       console.error('Unexpected error:', error);
