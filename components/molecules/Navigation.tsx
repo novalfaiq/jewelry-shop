@@ -8,7 +8,7 @@ type NavigationProps = {
 };
 
 const Navigation = ({ className = '', isOpen = false, onClose }: NavigationProps) => {
-  const navItems = [{ label: 'Home', href: '/' },{ label: 'Shop', href: '/shop' },{ label: 'Services', href: '/services' },{ label: 'About', href: '/about' },{ label: 'Contact', href: '/contact' }];
+  const navItems = [{ label: 'Home', href: '/' },{ label: 'Products', href: '/products' },{ label: 'Services', href: '/services' },{ label: 'About', href: '/about' },{ label: 'Contact', href: '/contact' }];
 
   return (
     <>

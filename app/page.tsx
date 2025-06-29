@@ -9,7 +9,7 @@ import Footer from '../components/organisms/Footer';
 
 export default function Home() {
   return (
-    <>
+    <div>
       <main>
         <Hero />
         <JewelryCategories />
@@ -20,6 +20,6 @@ export default function Home() {
         <Newsletter />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }
