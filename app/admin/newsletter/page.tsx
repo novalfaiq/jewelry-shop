@@ -7,6 +7,7 @@ import Heading from '@/components/atoms/Heading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import AdminSidebar from '@/components/molecules/AdminSidebar';
 
 export default function NewsletterManagement() {
   const [user, setUser] = useState<any>(null);
@@ -138,41 +139,7 @@ export default function NewsletterManagement() {
     <div className="min-h-screen bg-gray-50">
       <div className="flex h-screen">
         {/* Sidebar */}
-        <div className="w-64 bg-blue-900 text-white p-4 flex flex-col">
-          <div className="mb-8">
-            <h2 className="text-xl font-bold">Admin Panel</h2>
-          </div>
-          
-          <nav className="flex-1">
-            <ul className="space-y-2">
-              <li>
-                <button 
-                  onClick={() => router.push('/admin/dashboard')} 
-                  className="w-full text-left px-4 py-2 rounded transition-colors hover:bg-blue-800"
-                >
-                  Dashboard
-                </button>
-              </li>
-              <li>
-                <button 
-                  className="w-full text-left px-4 py-2 rounded transition-colors bg-blue-800"
-                >
-                  Newsletter
-                </button>
-              </li>
-            </ul>
-          </nav>
-          
-          <div className="mt-auto">
-            <Button 
-              variant="outline" 
-              onClick={handleSignOut}
-              className="w-full bg-transparent border-white text-white hover:bg-blue-800"
-            >
-              Sign Out
-            </Button>
-          </div>
-        </div>
+        <AdminSidebar onSignOut={handleSignOut} />
         
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-8">

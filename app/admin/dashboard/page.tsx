@@ -5,10 +5,14 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Heading from '@/components/atoms/Heading';
 import { Button } from '@/components/ui/button';
+import AdminSidebar from '@/components/molecules/AdminSidebar';
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriberCount, setSubscriberCount] = useState<number>(0);
+  const [productTypeCount, setProductTypeCount] = useState<number>(0);
+  const [productCount, setProductCount] = useState<number>(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -27,6 +31,68 @@ export default function Dashboard() {
     
     checkUser();
   }, [router]);
+  
+  useEffect(() => {
+    if (!loading) {
+      fetchSubscriberCount();
+      fetchProductTypeCount();
+      fetchProductCount();
+    }
+  }, [loading]);
+  
+  const fetchSubscriberCount = async () => {
+    try {
+      const supabase = createClient();
+      const { count, error } = await supabase
+        .from('newsletter')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error('Error fetching subscriber count:', error);
+        return;
+      }
+      
+      setSubscriberCount(count || 0);
+    } catch (error) {
+      console.error('Unexpected error fetching subscriber count:', error);
+    }
+  };
+  
+  const fetchProductTypeCount = async () => {
+    try {
+      const supabase = createClient();
+      const { count, error } = await supabase
+        .from('product_types')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error('Error fetching product type count:', error);
+        return;
+      }
+      
+      setProductTypeCount(count || 0);
+    } catch (error) {
+      console.error('Unexpected error fetching product type count:', error);
+    }
+  };
+  
+  const fetchProductCount = async () => {
+    try {
+      const supabase = createClient();
+      const { count, error } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error('Error fetching product count:', error);
+        return;
+      }
+      
+      setProductCount(count || 0);
+    } catch (error) {
+      console.error('Unexpected error fetching product count:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -46,41 +112,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <div className="flex h-screen">
         {/* Sidebar */}
-        <div className="w-64 bg-blue-900 text-white p-4 flex flex-col">
-          <div className="mb-8">
-            <h2 className="text-xl font-bold">Admin Panel</h2>
-          </div>
-          
-          <nav className="flex-1">
-            <ul className="space-y-2">
-              <li>
-                <button 
-                  className="w-full text-left px-4 py-2 rounded transition-colors bg-blue-800"
-                >
-                  Dashboard
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => router.push('/admin/newsletter')} 
-                  className="w-full text-left px-4 py-2 rounded transition-colors hover:bg-blue-800"
-                >
-                  Newsletter
-                </button>
-              </li>
-            </ul>
-          </nav>
-          
-          <div className="mt-auto">
-            <Button 
-              variant="outline" 
-              onClick={handleSignOut}
-              className="w-full bg-transparent border-white text-white hover:bg-blue-800"
-            >
-              Sign Out
-            </Button>
-          </div>
-        </div>
+        <AdminSidebar onSignOut={handleSignOut} />
         
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-8">
@@ -95,24 +127,19 @@ export default function Dashboard() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <DashboardCard 
-              title="Products" 
-              count="24" 
-              href="/admin/products"
-            />
-            <DashboardCard 
-              title="Orders" 
-              count="12" 
-              href="/admin/orders"
-            />
-            <DashboardCard 
-              title="Customers" 
-              count="48" 
-              href="/admin/customers"
-            />
-            <DashboardCard 
               title="Newsletter Subscribers" 
-              count="Manage"
+              count={subscriberCount.toString()}
               href="/admin/newsletter"
+            />
+            <DashboardCard 
+              title="Product Types" 
+              count={productTypeCount.toString()}
+              href="/admin/product-types"
+            />
+            <DashboardCard 
+              title="Products" 
+              count={productCount.toString()}
+              href="/admin/products"
             />
           </div>
         </div>
