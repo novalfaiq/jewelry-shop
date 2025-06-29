@@ -8,15 +8,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AdminSidebar from '@/components/molecules/AdminSidebar';
-import { prisma } from '@/lib/prisma';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type ProductType = {
   id: string;
   name: string;
-  description: string | null;
-  imageUrl: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  description: string;
+  created_at: string;
 };
 
 export default function ProductTypeManagement() {
@@ -25,7 +29,12 @@ export default function ProductTypeManagement() {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [newProductType, setNewProductType] = useState({ name: '', description: '', image: null as File | null });
+  const [newProductType, setNewProductType] = useState({
+    name: '',
+    description: ''
+  });
+  const [editingProductType, setEditingProductType] = useState<ProductType | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -55,14 +64,20 @@ export default function ProductTypeManagement() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/product-types');
-      const data = await response.json();
+      const supabase = createClient();
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch product types');
+      const { data, error } = await supabase
+        .from('product_types')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Fetch error:', error);
+        setError(`Fetch error: ${error.message}`);
+        return;
       }
       
-      setProductTypes(data);
+      setProductTypes(data || []);
     } catch (error: any) {
       console.error('Unexpected error:', error);
       setError(`Unexpected error: ${error?.message || 'Unknown error'}`);
@@ -83,69 +98,64 @@ export default function ProductTypeManagement() {
     
     try {
       const supabase = createClient();
-      let imageUrl = null;
-      
-      // Upload image if one is selected
-      if (newProductType.image) {
-        const fileExt = newProductType.image.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('product-type-images')
-          .upload(fileName, newProductType.image);
-          
-        if (uploadError) {
-          throw uploadError;
-        }
-        
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-type-images')
-          .getPublicUrl(fileName);
-          
-        imageUrl = publicUrl;
-      }
-      
-      const response = await fetch('/api/product-types', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { error } = await supabase
+        .from('product_types')
+        .insert([{ 
           name: newProductType.name,
-          description: newProductType.description,
-          imageUrl: imageUrl,
-        }),
+          description: newProductType.description
+        }]);
+        
+      if (error) throw error;
+      setNewProductType({
+        name: '',
+        description: ''
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to create product type');
-      }
-      
-      setNewProductType({ name: '', description: '', image: null });
       fetchProductTypes();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding product type:', error);
-      setError(error instanceof Error ? error.message : 'An error occurred');
+    }
+  };
+
+  const handleEditClick = (type: ProductType) => {
+    setEditingProductType(type);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProductType || !editingProductType.name) return;
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('product_types')
+        .update({ 
+          name: editingProductType.name,
+          description: editingProductType.description
+        })
+        .eq('id', editingProductType.id);
+
+      if (error) throw error;
+      setIsEditModalOpen(false);
+      setEditingProductType(null);
+      fetchProductTypes();
+    } catch (error) {
+      console.error('Error updating product type:', error);
     }
   };
   
   const handleDeleteProductType = async (id: string) => {
     try {
-      const response = await fetch(`/api/product-types/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to delete product type');
-      }
-
+      const supabase = createClient();
+      
+      const { error } = await supabase
+        .from('product_types')
+        .delete()
+        .eq('id', id);
+      
       fetchProductTypes();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting product type:', error);
-      setError(`Error deleting: ${error?.message || 'Unknown error'}`);
     }
   };
 
@@ -193,6 +203,7 @@ export default function ProductTypeManagement() {
                       className="mt-1"
                     />
                   </div>
+                  
                   <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
                     <Input
@@ -204,16 +215,7 @@ export default function ProductTypeManagement() {
                       className="mt-1"
                     />
                   </div>
-                  <div>
-                    <label htmlFor="image" className="block text-sm font-medium text-gray-700">Image</label>
-                    <Input
-                      id="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setNewProductType({...newProductType, image: e.target.files?.[0] || null})}
-                      className="mt-1"
-                    />
-                  </div>
+                  
                   <Button type="submit">Add Product Type</Button>
                 </form>
               </CardContent>
@@ -233,40 +235,38 @@ export default function ProductTypeManagement() {
                 {isLoading ? (
                   <p>Loading product types...</p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {productTypes.length > 0 ? (
-                      productTypes.map((productType) => (
-                        <div key={productType.id} className="p-4 border rounded-lg">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-medium">{productType.name}</h3>
-                              <p className="text-sm text-gray-600">{productType.description}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Created: {new Date(productType.createdAt).toLocaleDateString()}
-                              </p>
-                              {productType.imageUrl && (
-                                <div className="mt-2">
-                                  <img 
-                                    src={productType.imageUrl} 
-                                    alt={productType.name}
-                                    className="w-24 h-24 object-cover rounded-lg"
-                                  />
-                                </div>
-                              )}
+                      productTypes.map((type) => (
+                        <div key={type.id} className="p-4 border rounded-lg">
+                          <div className="space-y-2">
+                            <h3 className="font-medium text-lg">{type.name}</h3>
+                            <p className="text-sm text-gray-600">{type.description}</p>
+                            <div className="pt-2 space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditClick(type)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => type.id && handleDeleteProductType(type.id)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                Delete
+                              </Button>
                             </div>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => productType.id && handleDeleteProductType(productType.id)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              Delete
-                            </Button>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <p>No product types found</p>
+                      <div className="col-span-full">
+                        <p>No product types found</p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -275,6 +275,50 @@ export default function ProductTypeManagement() {
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900">Edit Product Type</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4 mt-4 text-gray-900">
+            <div>
+              <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">Name</label>
+              <Input
+                id="edit-name"
+                type="text"
+                placeholder="Product Type Name"
+                value={editingProductType?.name || ''}
+                onChange={(e) => setEditingProductType(prev => prev ? {...prev, name: e.target.value} : null)}
+                required
+                className="mt-1 text-gray-900"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">Description</label>
+              <Input
+                id="edit-description"
+                type="text"
+                placeholder="Product Type Description"
+                value={editingProductType?.description || ''}
+                onChange={(e) => setEditingProductType(prev => prev ? {...prev, description: e.target.value} : null)}
+                className="mt-1 text-gray-900"
+              />
+            </div>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)} className="text-gray-700 hover:text-gray-900">
+                Cancel
+              </Button>
+              <Button type="submit" className="text-white">
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

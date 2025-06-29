@@ -93,7 +93,7 @@ export default function About() {
         </section>
 
         {/* Team Section */}
-        <section className="py-16 bg-white">
+        {/* <section className="py-16 bg-white">
           <Container>
             <Heading level={2} className="text-gray-900 mb-12 text-center">Meet Our Team</Heading>
             <div className="grid md:grid-cols-3 gap-8">
@@ -129,7 +129,7 @@ export default function About() {
               </div>
             </div>
           </Container>
-        </section>
+        </section> */}
       </main>
       <Footer />
     </div>

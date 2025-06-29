@@ -8,10 +8,29 @@ CREATE TABLE product_types (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(255) NOT NULL,
   description TEXT,
-  image_url VARCHAR(255),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Enable RLS for product_types
+ALTER TABLE product_types ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for product_types
+CREATE POLICY "Allow public read access" ON product_types
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow authenticated insert access" ON product_types
+  FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated update access" ON product_types
+  FOR UPDATE
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated delete access" ON product_types
+  FOR DELETE
+  USING (auth.role() = 'authenticated');
 
 -- Products Table
 CREATE TABLE products (
@@ -30,6 +49,150 @@ CREATE TABLE newsletter (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email VARCHAR(255) NOT NULL UNIQUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Contact Messages Table
+CREATE TABLE contact_messages (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  subject VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'read', 'replied')),
+  priority VARCHAR(20) NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
+  category VARCHAR(50) NOT NULL DEFAULT 'general' CHECK (category IN ('general', 'product', 'service', 'support', 'feedback', 'other')),
+  assigned_to UUID REFERENCES auth.users(id),
+  phone VARCHAR(50),
+  company VARCHAR(255),
+  source VARCHAR(50) DEFAULT 'web' CHECK (source IN ('web', 'email', 'phone', 'social')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  replied_at TIMESTAMP WITH TIME ZONE,
+  closed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Contact Message Replies Table
+CREATE TABLE contact_message_replies (
+  id SERIAL PRIMARY KEY,
+  message_id INTEGER NOT NULL REFERENCES contact_messages(id) ON DELETE CASCADE,
+  replied_by UUID NOT NULL REFERENCES auth.users(id),
+  reply_text TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Contact Message Tags Table
+CREATE TABLE contact_message_tags (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(50) NOT NULL UNIQUE,
+  color VARCHAR(20) NOT NULL DEFAULT 'blue',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Contact Messages to Tags Junction Table
+CREATE TABLE contact_messages_to_tags (
+  message_id INTEGER REFERENCES contact_messages(id) ON DELETE CASCADE,
+  tag_id INTEGER REFERENCES contact_message_tags(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (message_id, tag_id)
+);
+
+-- Contact Message Attachments Table
+CREATE TABLE contact_message_attachments (
+  id SERIAL PRIMARY KEY,
+  message_id INTEGER NOT NULL REFERENCES contact_messages(id) ON DELETE CASCADE,
+  file_name VARCHAR(255) NOT NULL,
+  file_size INTEGER NOT NULL,
+  file_type VARCHAR(100) NOT NULL,
+  storage_path TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS for all contact-related tables
+ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_message_replies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_message_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_messages_to_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_message_attachments ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for contact_messages
+CREATE POLICY "Allow authenticated read access to contact_messages" ON contact_messages
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow public insert access to contact_messages" ON contact_messages
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated update access to contact_messages" ON contact_messages
+  FOR UPDATE
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- Create policies for contact_message_replies
+CREATE POLICY "Allow authenticated access to contact_message_replies" ON contact_message_replies
+  FOR ALL USING (auth.role() = 'authenticated');
+
+-- Create policies for contact_message_tags
+CREATE POLICY "Allow authenticated access to contact_message_tags" ON contact_message_tags
+  FOR ALL USING (auth.role() = 'authenticated');
+
+-- Create policies for contact_messages_to_tags
+CREATE POLICY "Allow authenticated access to contact_messages_to_tags" ON contact_messages_to_tags
+  FOR ALL USING (auth.role() = 'authenticated');
+
+-- Create policies for contact_message_attachments
+CREATE POLICY "Allow authenticated access to contact_message_attachments" ON contact_message_attachments
+  FOR ALL USING (auth.role() = 'authenticated');
+
+-- Create trigger for updated_at on contact_messages
+CREATE TRIGGER update_contact_messages_modtime
+    BEFORE UPDATE ON contact_messages
+    FOR EACH ROW
+    EXECUTE FUNCTION update_modified_column();
+
+-- Create indexes for contact-related tables
+CREATE INDEX idx_contact_messages_status ON contact_messages(status);
+CREATE INDEX idx_contact_messages_priority ON contact_messages(priority);
+CREATE INDEX idx_contact_messages_category ON contact_messages(category);
+CREATE INDEX idx_contact_messages_created_at ON contact_messages(created_at);
+CREATE INDEX idx_contact_messages_assigned_to ON contact_messages(assigned_to);
+CREATE INDEX idx_contact_message_replies_message_id ON contact_message_replies(message_id);
+CREATE INDEX idx_contact_message_attachments_message_id ON contact_message_attachments(message_id);
+
+-- Create a view for contact message details with replies count
+CREATE OR REPLACE VIEW contact_message_details AS
+SELECT 
+  cm.*,
+  COUNT(DISTINCT cmr.id) as reply_count,
+  COUNT(DISTINCT cma.id) as attachment_count,
+  STRING_AGG(DISTINCT cmt.name, ', ') as tags
+FROM contact_messages cm
+LEFT JOIN contact_message_replies cmr ON cm.id = cmr.message_id
+LEFT JOIN contact_message_attachments cma ON cm.id = cma.message_id
+LEFT JOIN contact_messages_to_tags cmtt ON cm.id = cmtt.message_id
+LEFT JOIN contact_message_tags cmt ON cmtt.tag_id = cmt.id
+GROUP BY cm.id;
+
+-- Insert some default tags
+INSERT INTO contact_message_tags (name, color) VALUES
+  ('urgent', 'red'),
+  ('follow-up', 'yellow'),
+  ('resolved', 'green'),
+  ('product-inquiry', 'blue'),
+  ('feedback', 'purple')
+ON CONFLICT DO NOTHING;
+
+-- Storage bucket for contact attachments
+DO $$
+BEGIN
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('contact-attachments', 'contact-attachments', false)
+  ON CONFLICT (id) DO NOTHING;
+END $$;
+
+-- Create policies for contact attachments storage
+CREATE POLICY "Allow authenticated access to contact-attachments bucket" ON storage.objects
+FOR ALL USING (
+  bucket_id = 'contact-attachments' 
+  AND auth.role() = 'authenticated'
 );
 
 -- Indexes
@@ -66,11 +229,21 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 END $$;
 
--- Storage policies for product-type-images bucket
--- Policy for viewing/downloading images (public access)
-CREATE POLICY "Public Access" ON storage.objects
-    FOR SELECT
-    USING (bucket_id = 'product-type-images');
+-- Enable RLS for storage.objects
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for storage.objects
+CREATE POLICY "Give users authenticated access to product-type-images bucket" ON storage.objects
+FOR ALL USING (
+  bucket_id = 'product-type-images' 
+  AND auth.role() = 'authenticated'
+);
+
+-- Allow public read access to product-type-images
+CREATE POLICY "Give public read-only access to product-type-images bucket" ON storage.objects
+FOR SELECT USING (
+  bucket_id = 'product-type-images'
+);
 
 -- Policy for uploading images (authenticated users only)
 CREATE POLICY "Authenticated Users Can Upload" ON storage.objects
