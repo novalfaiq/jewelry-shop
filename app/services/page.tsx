@@ -254,7 +254,7 @@ export default function Services() {
                 <Button href="/contact" variant="light" className="px-8">
                   CONTACT US
                 </Button>
-                <Button href="tel:+1234567890" variant="outline" className="px-8 border-white text-white hover:bg-white hover:text-blue-900">
+                <Button href="tel:+1234567890" variant="secondary" className="px-8 border-white text-white hover:bg-white hover:text-blue-900">
                   CALL NOW
                 </Button>
               </div>
