@@ -2,41 +2,46 @@ import React from 'react';
 import Container from '../atoms/Container';
 import Heading from '../atoms/Heading';
 import CategoriesGrid from '../molecules/CategoriesGrid';
+import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 
-const categories = [
-  {
-    id: 'earrings',
-    title: 'Earrings',
-    imageSrc: '/categories/earrings.png',
-    href: '/shop/earrings',
-  },
-  {
-    id: 'necklaces',
-    title: 'Necklaces',
-    imageSrc: '/categories/necklaces.png',
-    href: '/shop/necklaces',
-  },
-  {
-    id: 'bracelets',
-    title: 'Bracelets',
-    imageSrc: '/categories/bracelets.png',
-    href: '/shop/bracelets',
-  },
-  {
-    id: 'rings',
-    title: 'All Rings',
-    imageSrc: '/categories/rings.png',
-    href: '/shop/rings',
-  },
-  {
-    id: 'engagement',
-    title: 'Engagement Rings',
-    imageSrc: '/categories/engagement.png',
-    href: '/shop/engagement',
-  },
-];
+type ProductType = {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+};
 
-const JewelryCategories = () => {
+type Category = {
+  id: string;
+  title: string;
+  imageSrc: string;
+  href: string;
+};
+
+async function getProductTypes() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data: productTypes } = await supabase
+    .from('product_types')
+    .select('id, name, description, image_url')
+    .order('name');
+
+  // Transform the data to match the expected Category type
+  const categories: Category[] = (productTypes || []).map((item) => ({
+    id: item.id,
+    title: item.name,
+    imageSrc: item.image_url || `/categories/${item.name.toLowerCase().replace(/\s+/g, '-')}.png`,
+    href: "products",
+  }));
+
+  return categories;
+}
+
+const JewelryCategories = async () => {
+  const categories = await getProductTypes();
+
   return (
     <section className="py-16 bg-gray-50">
       <Container>
