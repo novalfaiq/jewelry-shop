@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [productTypeCount, setProductTypeCount] = useState<number>(0);
   const [productCount, setProductCount] = useState<number>(0);
   const [contactMessageCount, setContactMessageCount] = useState<number>(0);
+  const [customerReviewCount, setCustomerReviewCount] = useState<number>(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function Dashboard() {
       fetchProductTypeCount();
       fetchProductCount();
       fetchContactMessageCount();
+      fetchCustomerReviewCount();
     }
   }, [loading]);
   
@@ -114,6 +116,24 @@ export default function Dashboard() {
     }
   };
 
+  const fetchCustomerReviewCount = async () => {
+    try {
+      const supabase = createClient();
+      const { count, error } = await supabase
+        .from('reviews')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Error fetching customer review count:', error);
+        return;
+      }
+
+      setCustomerReviewCount(count || 0);
+    } catch (error) {
+      console.error('Unexpected error fetching customer review count:', error);
+    }
+  };
+
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -165,6 +185,11 @@ export default function Dashboard() {
               title="Contact Messages" 
               count={contactMessageCount.toString()}
               href="/admin/contact"
+            />
+            <DashboardCard 
+              title="Customer Reviews" 
+              count={customerReviewCount.toString()}
+              href="/admin/reviews"
             />
           </div>
         </div>
