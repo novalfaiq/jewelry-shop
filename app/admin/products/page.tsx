@@ -9,6 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AdminSidebar from '@/components/molecules/AdminSidebar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type ProductType = {
   id: string;
@@ -22,7 +29,7 @@ type Product = {
   description: string;
   price: number;
   product_type_id: string;
-  image_url: string;
+  image_url: string | null;
   created_at: string;
   product_type?: ProductType;
 };
@@ -39,8 +46,11 @@ export default function ProductManagement() {
     description: '',
     price: '',
     product_type_id: '',
-    image_url: ''
+    image: null as File | null
   });
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editImage, setEditImage] = useState<File | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -158,11 +168,40 @@ export default function ProductManagement() {
     router.push('/admin/login');
   };
   
+  const uploadImage = async (file: File) => {
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `products/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProduct.name || !newProduct.product_type_id) return;
     
     try {
+      let imageUrl = '/blue-ring.png'; // Default image
+      if (newProduct.image) {
+        imageUrl = await uploadImage(newProduct.image);
+      }
+
       const supabase = createClient();
       const { error } = await supabase
         .from('products')
@@ -171,7 +210,7 @@ export default function ProductManagement() {
           description: newProduct.description,
           price: parseFloat(newProduct.price) || 0,
           product_type_id: newProduct.product_type_id,
-          image_url: newProduct.image_url || '/blue-ring.png'
+          image_url: imageUrl
         }]);
         
       if (error) throw error;
@@ -180,7 +219,7 @@ export default function ProductManagement() {
         description: '',
         price: '',
         product_type_id: productTypes.length > 0 ? productTypes[0].id : '',
-        image_url: ''
+        image: null
       });
       fetchProducts();
     } catch (error) {
@@ -200,6 +239,43 @@ export default function ProductManagement() {
       fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
+    }
+  };
+
+  const handleEditClick = (product: Product) => {
+    setEditingProduct(product);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+
+    try {
+      let imageUrl = editingProduct.image_url;
+      if (editImage) {
+        imageUrl = await uploadImage(editImage);
+      }
+
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('products')
+        .update({ 
+          name: editingProduct.name,
+          description: editingProduct.description,
+          price: editingProduct.price,
+          product_type_id: editingProduct.product_type_id,
+          image_url: imageUrl
+        })
+        .eq('id', editingProduct.id);
+
+      if (error) throw error;
+      setIsEditModalOpen(false);
+      setEditingProduct(null);
+      setEditImage(null);
+      fetchProducts();
+    } catch (error) {
+      console.error('Error updating product:', error);
     }
   };
 
@@ -235,40 +311,51 @@ export default function ProductManagement() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAddProduct} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                      <Input
-                        id="name"
-                        type="text"
-                        placeholder="Product Name"
-                        value={newProduct.name}
-                        onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                        required
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        placeholder="99.99"
-                        value={newProduct.price}
-                        onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
-                        required
-                        className="mt-1"
-                      />
-                    </div>
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Product Name"
+                      value={newProduct.name}
+                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                      className="mt-1"
+                    />
                   </div>
                   
                   <div>
-                    <label htmlFor="product_type" className="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
-                    <Select value={newProduct.product_type_id} onValueChange={(value) => setNewProduct({...newProduct, product_type_id: value})}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a product type" />
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+                    <Input
+                      id="description"
+                      type="text"
+                      placeholder="Description"
+                      value={newProduct.description}
+                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      placeholder="Price"
+                      value={newProduct.price}
+                      onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="product-type" className="block text-sm font-medium text-gray-700">Product Type</label>
+                    <Select
+                      value={newProduct.product_type_id}
+                      onValueChange={(value) => setNewProduct({ ...newProduct, product_type_id: value })}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select Product Type" />
                       </SelectTrigger>
                       <SelectContent>
                         {productTypes.map((type) => (
@@ -279,32 +366,24 @@ export default function ProductManagement() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+                    <label htmlFor="image" className="block text-sm font-medium text-gray-700">Image</label>
                     <Input
-                      id="description"
-                      type="text"
-                      placeholder="Product Description"
-                      value={newProduct.description}
-                      onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setNewProduct({ ...newProduct, image: file });
+                      }}
                       className="mt-1"
                     />
                   </div>
                   
-                  <div>
-                    <label htmlFor="image_url" className="block text-sm font-medium text-gray-700">Image URL</label>
-                    <Input
-                      id="image_url"
-                      type="text"
-                      placeholder="/path/to/image.png"
-                      value={newProduct.image_url}
-                      onChange={(e) => setNewProduct({...newProduct, image_url: e.target.value})}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <Button type="submit">Add Product</Button>
+                  <Button type="submit" className="w-full">
+                    Add Product
+                  </Button>
                 </form>
               </CardContent>
             </Card>
@@ -314,56 +393,137 @@ export default function ProductManagement() {
                 <CardTitle>Products List</CardTitle>
               </CardHeader>
               <CardContent>
-                {error && (
-                  <div className="p-4 mb-4 bg-red-100 text-red-700 rounded">
-                    <p><strong>Error:</strong> {error}</p>
-                  </div>
-                )}
-                
                 {isLoading ? (
                   <p>Loading products...</p>
+                ) : error ? (
+                  <p className="text-red-500">{error}</p>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {products.length > 0 ? (
-                      products.map((product) => (
-                        <div key={product.id} className="p-4 border rounded-lg">
-                          <div className="space-y-2">
-                            <div className="aspect-square bg-gray-100 rounded-md overflow-hidden relative">
-                              {product.image_url && (
-                                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                                  [Image: {product.image_url}]
-                                </div>
-                              )}
-                            </div>
-                            <h3 className="font-medium text-lg">{product.name}</h3>
-                            <p className="text-sm text-gray-600">{product.description}</p>
-                            <p className="font-bold text-blue-900">${product.price.toFixed(2)}</p>
-                            <p className="text-xs text-gray-500">
-                              Type: {product.product_type?.name || 'Unknown'}
-                            </p>
-                            <div className="pt-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => product.id && handleDeleteProduct(product.id)}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                Delete
-                              </Button>
-                            </div>
+                  <div className="space-y-4">
+                    {products.map((product) => (
+                      <div key={product.id} className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={product.image_url || '/blue-ring.png'}
+                            alt={product.name}
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                          <div>
+                            <h3 className="font-medium">{product.name}</h3>
+                            <p className="text-sm text-gray-500">{product.description}</p>
+                            <p className="text-sm text-gray-500">Price: ${product.price}</p>
+                            <p className="text-sm text-gray-500">Type: {product.product_type?.name}</p>
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="col-span-full">
-                        <p>No products found</p>
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={() => handleEditClick(product)}
+                            variant="outline"
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteProduct(product.id)}
+                            variant="destructive"
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
+
+          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Product</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">Name</label>
+                  <Input
+                    id="edit-name"
+                    type="text"
+                    value={editingProduct?.name || ''}
+                    onChange={(e) => setEditingProduct(prev => prev ? { ...prev, name: e.target.value } : null)}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">Description</label>
+                  <Input
+                    id="edit-description"
+                    type="text"
+                    value={editingProduct?.description || ''}
+                    onChange={(e) => setEditingProduct(prev => prev ? { ...prev, description: e.target.value } : null)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-price" className="block text-sm font-medium text-gray-700">Price</label>
+                  <Input
+                    id="edit-price"
+                    type="number"
+                    step="0.01"
+                    value={editingProduct?.price || ''}
+                    onChange={(e) => setEditingProduct(prev => prev ? { ...prev, price: parseFloat(e.target.value) || 0 } : null)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-product-type" className="block text-sm font-medium text-gray-700">Product Type</label>
+                  <Select
+                    value={editingProduct?.product_type_id || ''}
+                    onValueChange={(value) => setEditingProduct(prev => prev ? { ...prev, product_type_id: value } : null)}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select Product Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {productTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-image" className="block text-sm font-medium text-gray-700">Image</label>
+                  {editingProduct?.image_url && (
+                    <img
+                      src={editingProduct.image_url}
+                      alt={editingProduct.name}
+                      className="w-20 h-20 object-cover rounded mt-1 mb-2"
+                    />
+                  )}
+                  <Input
+                    id="edit-image"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setEditImage(file);
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button type="submit">
+                    Save Changes
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

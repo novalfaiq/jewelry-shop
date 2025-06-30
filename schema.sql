@@ -8,6 +8,7 @@ CREATE TABLE product_types (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(255) NOT NULL,
   description TEXT,
+  image_url VARCHAR(255),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -221,7 +222,6 @@ CREATE TRIGGER update_products_modtime
     EXECUTE FUNCTION update_modified_column();
 
 -- Storage bucket for product type images
--- Run this in Supabase SQL Editor
 DO $$
 BEGIN
   INSERT INTO storage.buckets (id, name, public)
@@ -232,7 +232,7 @@ END $$;
 -- Enable RLS for storage.objects
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
--- Create policies for storage.objects
+-- Create policies for product type images storage
 CREATE POLICY "Give users authenticated access to product-type-images bucket" ON storage.objects
 FOR ALL USING (
   bucket_id = 'product-type-images' 

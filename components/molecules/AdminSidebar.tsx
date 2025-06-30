@@ -15,8 +15,8 @@ export default function AdminSidebar({ onSignOut }: AdminSidebarProps) {
     { name: 'Dashboard', path: '/admin/dashboard' },
     { name: 'Newsletter', path: '/admin/newsletter' },
     { name: 'Product Types', path: '/admin/product-types' },
+    { name: 'Products', path: '/admin/products' },
     { name: 'Contact Messages', path: '/admin/contact' },
-    // { name: 'Products', path: '/admin/products' },
   ];
 
   return (
