@@ -11,6 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useForm } from 'react-hook-form';
 import Logo from '@/components/atoms/Logo';
 import Container from '@/components/atoms/Container';
+import Link from 'next/link';
 
 type FormValues = {
     email: string;
@@ -58,7 +59,9 @@ export default function Login() {
             <Container>
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="text-center">
-                        <Logo className="text-blue-900 mx-auto" />
+                       <Link href="/" className="font-extrabold text-gray-900">
+                            BAYSIDE FINE JEWELRY
+                        </Link>
                     </div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                         Admin Login
