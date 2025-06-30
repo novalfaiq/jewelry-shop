@@ -334,3 +334,37 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Reviews Table
+CREATE TABLE reviews (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS for reviews
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for reviews
+CREATE POLICY "Allow public read access to approved reviews" ON reviews
+  FOR SELECT USING (status = 'approved');
+
+CREATE POLICY "Allow public insert access to reviews" ON reviews
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated full access to reviews" ON reviews
+  FOR ALL USING (auth.role() = 'authenticated');
+
+-- Create trigger for updated_at on reviews
+CREATE TRIGGER update_reviews_modtime
+    BEFORE UPDATE ON reviews
+    FOR EACH ROW
+    EXECUTE FUNCTION update_modified_column();
+
+-- Create indexes for reviews
+CREATE INDEX idx_reviews_status ON reviews(status);
+CREATE INDEX idx_reviews_created_at ON reviews(created_at);

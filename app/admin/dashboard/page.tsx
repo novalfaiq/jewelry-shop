@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [subscriberCount, setSubscriberCount] = useState<number>(0);
   const [productTypeCount, setProductTypeCount] = useState<number>(0);
   const [productCount, setProductCount] = useState<number>(0);
+  const [contactMessageCount, setContactMessageCount] = useState<number>(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export default function Dashboard() {
       fetchSubscriberCount();
       fetchProductTypeCount();
       fetchProductCount();
+      fetchContactMessageCount();
     }
   }, [loading]);
   
@@ -94,6 +96,24 @@ export default function Dashboard() {
     }
   };
 
+  const fetchContactMessageCount = async () => {
+    try {
+      const supabase = createClient();
+      const { count, error } = await supabase
+        .from('contact_messages')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Error fetching contact message count:', error);
+        return;
+      }
+
+      setContactMessageCount(count || 0);
+    } catch (error) {
+      console.error('Unexpected error fetching contact message count:', error);
+    }
+  };
+
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -140,6 +160,11 @@ export default function Dashboard() {
               title="Products" 
               count={productCount.toString()}
               href="/admin/products"
+            />
+            <DashboardCard 
+              title="Contact Messages" 
+              count={contactMessageCount.toString()}
+              href="/admin/contact"
             />
           </div>
         </div>

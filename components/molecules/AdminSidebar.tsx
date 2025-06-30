@@ -10,12 +10,13 @@ type AdminSidebarProps = {
 export default function AdminSidebar({ onSignOut }: AdminSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const navItems = [
     { name: 'Dashboard', path: '/admin/dashboard' },
     { name: 'Newsletter', path: '/admin/newsletter' },
     { name: 'Product Types', path: '/admin/product-types' },
     { name: 'Products', path: '/admin/products' },
+    { name: 'Reviews', path: '/admin/reviews' },
     { name: 'Contact Messages', path: '/admin/contact' },
   ];
 
@@ -41,7 +42,7 @@ export default function AdminSidebar({ onSignOut }: AdminSidebarProps) {
       </nav>
       
       <div className="mt-auto">
-        <Button 
+        <Button
           variant="outline" 
           onClick={onSignOut}
           className="w-full bg-transparent border-white text-white hover:bg-blue-800"
