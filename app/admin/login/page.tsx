@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,19 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     
+    useEffect(() => {
+        const checkAuth = async () => {
+            const supabase = createClient();
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                router.replace('/admin/dashboard');
+            }
+        };
+        
+        checkAuth();
+    }, [router]);
+
     const form = useForm<FormValues>({
         defaultValues: {
             email: '',
