@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, FormEvent } from 'react'
 import Container from '../atoms/Container'
 import Heading from '../atoms/Heading'
 import Button from '../atoms/Button'
@@ -8,9 +8,9 @@ import { createClient } from '@/utils/supabase/client' // Using the actual expor
 
 const Newsletter = () => {
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState(null) // success or error
+  const [status, setStatus] = useState<'success' | 'error' | null>(null) // success or error
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
     const supabase = createClient()
