@@ -5,13 +5,6 @@ import CategoriesGrid from '../molecules/CategoriesGrid';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 
-type ProductType = {
-  id: string;
-  name: string;
-  description: string | null;
-  image_url: string | null;
-};
-
 type Category = {
   id: string;
   title: string;
